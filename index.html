@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luna Bar</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Playfair+Display:wght@700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+<style>
+        /* --- 1. Global Setup & Variables --- */
+        :root {
+            --gold-primary: #FFD700;
+            --gold-accent: #DAA520;
+            --black-bg: #000000; 
+            --dark-gray-card: #1A1A1A;
+            --white-text: #E0E0E0;
+            --glow-effect: 0 0 15px rgba(255, 215, 0, 0.6);
+            --transition-smooth: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --shadow-deep: 0 15px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: var(--black-bg);
+            color: var(--white-text);
+            overflow-x: hidden;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- Animated Gradient Background (Deep Black) --- */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(135deg, #000000 0%, #050505 25%, #0F0F0F 50%, #050505 75%, #000000 100%);
+            background-size: 400% 400%;
+            animation: backgroundPan 25s ease infinite;
+        }
+
+        @keyframes backgroundPan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Background Star Particles (Massively Increased) --- */
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background: var(--gold-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 4px 1px rgba(255, 215, 0, 0.4);
+            animation: move-star linear infinite;
+        }
+
+        @keyframes move-star {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.2; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+
+        /* --- 2. Intro Loader Screen --- */
+        #loader-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--black-bg);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            opacity: 1;
+            transition: opacity 1s ease-out 0.8s;
+        }
+
+        .loader-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        @keyframes introFrameAnimation {
+            0% {
+                transform: scale(0.5) rotate(0deg);
+                opacity: 0;
+            }
+            30% {
+                transform: scale(1) rotate(108deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+            }
+        }
+        
+        .logo-container {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            animation: introFrameAnimation 4s ease-out forwards, 
+                       pulseGlow 2.5s infinite alternate 1s;
+        }
+        
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.5); }
+            100% { box-shadow: 0 0 30px 10px rgba(255, 215, 0, 0.8); }
+        }
+
+        .logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .loading-bar-container {
+            width: 200px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-top: 30px;
+            overflow: hidden;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-accent), var(--gold-primary));
+            width: 0;
+            border-radius: 4px;
+            animation: fillBar 4s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+            box-shadow: var(--glow-effect);
+        }
+
+        @keyframes fillBar {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* Intro exit animations */
+        #loader-wrapper.zoom-out {
+            opacity: 0;
+            transition: opacity 1s ease-out 0.5s;
+            pointer-events: none;
+        }
+        #loader-wrapper.zoom-out .logo-container {
+            transform: scale(3); 
+            opacity: 0;
+            transition: transform 1s cubic-bezier(0.6, 0.04, 0.98, 0.34), opacity 0.7s ease-out;
+        }
+        #loader-wrapper.zoom-out .loading-bar-container {
+            transform: scale(0.5);
+            opacity: 0;
+            transition: all 0.5s ease-out;
+        }
+
+        /* --- 3. Main Content (Hidden Initially) --- */
+        #main-content {
+            display: none;
+            opacity: 0;
+            animation: fadeInContent 1s ease-in forwards 0.5s;
+        }
+
+        @keyframes fadeInContent {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* --- 4. Header & Navigation (FIXED) --- */
+        #header-container {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+        }
+        
+        #main-header {
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-logo-small {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5));
+        }
+
+        .lang-switch button {
+            background: transparent;
+            color: var(--gold-primary);
+            border: 1px solid var(--gold-accent);
+            padding: 0.4rem 0.7rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .lang-switch button:hover {
+            background: var(--gold-primary);
+            color: var(--black-bg);
+            box-shadow: var(--glow-effect);
+            transform: scale(1.05);
+        }
+
+        /* --- Horizontal Scrolling Category Nav --- */
+        .category-nav-wrapper {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0.5rem 1rem;
+            border-top: 1px solid var(--gold-accent);
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .category-nav-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-nav {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .category-nav a {
+            flex-shrink: 0;
+            color: var(--white-text);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: var(--transition-smooth);
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+        }
+        
+        .category-nav a.active,
+        .category-nav a:hover {
+            background: var(--gold-primary);
+            color: var(--black-bg);
+            box-shadow: var(--glow-effect);
+            border-color: var(--gold-primary);
+        }
+
+        /* --- Main Content Area (Padding for fixed header) --- */
+        #menu-container {
+            padding-top: 125px; 
+            padding-bottom: 2rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .menu-category {
+            margin-bottom: 3.5rem;
+        }
+
+        .category-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--gold-primary);
+            margin-bottom: 2rem;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .category-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            border-radius: 2px;
+        }
+
+        .menu-items-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        /* --- 5. Menu Item Card --- */
+        .menu-item-card {
+            background: var(--dark-gray-card);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-deep);
+            transition: var(--transition-smooth);
+            position: relative;
+            z-index: 1;
+            transform-style: preserve-3d;
+        }
+        
+        .menu-item-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .card-border-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            background: linear-gradient(45deg, var(--gold-primary), var(--gold-accent)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: var(--glow-effect);
+            z-index: -1;
+        }
+        
+        .menu-item-card:hover .card-border-glow {
+            opacity: 1;
+        }
+
+        .item-image-wrapper {
+            height: 180px;
+            overflow: hidden;
+            position: relative;
+            transform: translateZ(0);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #222;
+            transition: transform 0.5s ease-out;
+            transform: translateZ(-5px) scale(1.1);
+        }
+
+        .menu-item-card:hover .item-image {
+            transform: translateZ(0) scale(1);
+        }
+
+        .item-details {
+            padding: 1.25rem 1rem;
+            transform: translateZ(5px);
+            position: relative;
+        }
+
+        .item-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            color: var(--white-text);
+            text-shadow: 0 0 5px rgba(0,0,0,0.7);
+        }
+
+        .item-price {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 1.1rem;
+            color: var(--gold-primary);
+            font-weight: 600;
+            text-shadow: 0 0 3px rgba(255, 215, 0, 0.5);
+        }
+        
+        /* --- 7. Language & RTL Styling --- */
+        body[dir="rtl"] {
+            font-family: 'Cairo', sans-serif;
+            text-align: right;
+        }
+        body[dir="ltr"] {
+            font-family: 'Source Sans Pro', sans-serif;
+            text-align: left;
+        }
+
+        body[dir="rtl"] #main-header {
+            flex-direction: row-reverse;
+        }
+        body[dir="rtl"] .category-title::after {
+            left: auto;
+            right: 50%;
+            transform: translateX(50%);
+        }
+        body[dir="rtl"] .category-nav {
+            flex-direction: row-reverse;
+        }
+        body[dir="rtl"] .category-nav-wrapper {
+            direction: rtl;
+        }
+        
+        /* --- 8. Responsive Adjustments --- */
+        
+        @media (min-width: 768px) {
+            #main-header {
+                padding: 1rem 2rem;
+            }
+            
+            .header-logo-small {
+                height: 50px;
+            }
+
+            .category-nav-wrapper {
+                overflow: visible;
+                white-space: normal;
+                padding: 0.5rem 2rem;
+                display: flex;
+                justify-content: center;
+            }
+            .category-nav {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            #menu-container {
+                padding-top: 150px; 
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+
+            .category-title {
+                font-size: 2.8rem;
+                padding-bottom: 15px;
+            }
+            .category-title::after {
+                width: 100px;
+            }
+
+            .menu-items-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+
+            .item-name {
+                font-size: 1.6rem;
+            }
+            .item-price {
+                font-size: 1.25rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .menu-items-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .menu-item-card:hover .item-image {
+                 transform: translateZ(0) scale(1.05);
+            }
+
+            .category-title {
+                font-size: 3.2rem;
+            }
+            
+            #menu-container {
+                padding-top: 140px; 
+            }
+        }
+        
+        @media (min-width: 1400px) {
+             .menu-items-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* --- 9. Footer --- */
+        #main-footer {
+            padding: 2rem 1rem;
+            text-align: center;
+            background: #000; /* Match the deep black */
+            border-top: 1px solid var(--gold-accent);
+            margin-top: 3rem; /* Space from the last section */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .copyright-text {
+            font-family: 'Source Sans Pro', sans-serif;
+            color: var(--white-text);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        .social-icon {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; /* Circular shape */
+            background: var(--gold-primary);
+            color: var(--black-bg);
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: var(--transition-smooth);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .social-icon:hover {
+            transform: scale(1.1) rotate(15deg);
+            box-shadow: var(--glow-effect);
+            background: var(--gold-accent);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stars-container"></div>
+
+    <div id="loader-wrapper">
+        <div class="loader-content">
+            <div class="logo-container">
+                <img src="https://archive.org/download/untitled-design-3_202511/Untitled%20design%283%29.png" alt="Brand Logo" class="logo-image">
+            </div>
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content">
+
+        <div id="header-container">
+            <header id="main-header">
+                <img src="https://archive.org/download/untitled-design-3_202511/Untitled%20design%283%29.png" alt="Brand Logo" class="header-logo-small">
+                <div class="lang-switch">
+                    <button id="lang-toggle">AR</button>
+                </div>
+            </header>
+            
+            <div class="category-nav-wrapper">
+                <nav class="category-nav">
+                    <a href="#frappuccino" class="category-link active" data-en="Frappuccino" data-ar="فرابتشينو">Frappuccino</a>
+                    <a href="#latte" class="category-link" data-en="Latte" data-ar="لاتيه">Latte</a>
+                    <a href="#smoothie" class="category-link" data-en="Smoothie" data-ar="سموذي">Smoothie</a>
+                    <a href="#mojito" class="category-link" data-en="Mojito" data-ar="موهيتو">Mojito</a>
+                    <a href="#cocktail" class="category-link" data-en="Cocktail" data-ar="كوكتيل">Cocktail</a>
+                    <a href="#coffee" class="category-link" data-en="Coffee" data-ar="قهوة">Coffee</a>
+                    <a href="#desserts" class="category-link" data-en="Desserts" data-ar="حلويات">Desserts</a>
+                </nav>
+            </div>
+        </div>
+
+        <main id="menu-container">
+
+            <section id="frappuccino" class="menu-category">
+                <h2 class="category-title" data-en="Frappuccino" data-ar="فرابتشينو">Frappuccino</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L1%20%281%29.png" alt="Caramel Frappuccino" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Caramel Frappuccino" data-ar="فرابتشينو كراميل">Caramel Frappuccino</h3>
+                            <p class="item-price" data-price="3">3 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://ia601409.us.archive.org/0/items/l-20-1/L2%20%281%29.png" alt="Chocolate Frappuccino" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Chocolate Frappuccino" data-ar="فرابتشينو شوكليت">Chocolate Frappuccino</h3>
+                            <p class="item-price" data-price="3">3 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://ia601409.us.archive.org/0/items/l-20-1/L3%20%281%29.png" alt="Hazelnut Frappuccino" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Hazelnut Frappuccino" data-ar="فرابتشينو بندق">Hazelnut Frappuccino</h3>
+                            <p class="item-price" data-price="3">3 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://ia601409.us.archive.org/0/items/l-20-1/L4%20%281%29.png" alt="Vanilla Frappuccino" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Vanilla Frappuccino" data-ar="فرابتشينو ڤانيلا">Vanilla Frappuccino</h3>
+                            <p class="item-price" data-price="3">3 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="latte" class="menu-category">
+                <h2 class="category-title" data-en="Latte" data-ar="لاتيه">Latte</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L5%20%281%29.png" alt="Iced Latte" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Iced Latte" data-ar="آيس لاتيه">Iced Latte</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L6%20%281%29.png" alt="Iced Spanish Latte" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Iced Spanish Latte" data-ar="آيس سبانيش لاتيه">Iced Spanish Latte</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L7%20%281%29.png" alt="Iced Caramel Latte" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Iced Caramel Latte" data-ar="آيس كراميل لاتيه">Iced Caramel Latte</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L8%20%281%29.png" alt="Iced Hazelnut Latte" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Iced Hazelnut Latte" data-ar="آيس بندق لاتيه">Iced Hazelnut Latte</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L9%20%281%29.png" alt="Iced Mocha Latte" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Iced Mocha Latte" data-ar="آيس موكا لاتيه">Iced Mocha Latte</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="smoothie" class="menu-category">
+                <h2 class="category-title" data-en="Smoothie" data-ar="سموذي">Smoothie</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L10%20%281%29.png" alt="Mango Smoothie" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Mango Smoothie" data-ar="مانجو سموذي">Mango Smoothie</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L11%20%281%29.png" alt="Strawberry Smoothie" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Strawberry Smoothie" data-ar="فراولة سموذي">Strawberry Smoothie</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="mojito" class="menu-category">
+                <h2 class="category-title" data-en="Mojito" data-ar="موهيتو">Mojito</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L12%20%281%29.png" alt="Seven Mojito" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Seven Mojito" data-ar="موهيتو سفن">Seven Mojito</h3>
+                            <p class="item-price" data-price="1.5">1.5 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L13%20%281%29.png" alt="BM Mojito" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="BM Mojito" data-ar="موهيتو بي إم">BM Mojito</h3>
+                            <p class="item-price" data-price="2.0">2.0 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L14%20%281%29.png" alt="Bombom Mojito" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Bombom Mojito" data-ar="موهيتو بومبوم">Bombom Mojito</h3>
+                            <p class="item-price" data-price="2.5">2.5 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L15%20%281%29.png" alt="Red Bull Mojito" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Red Bull Mojito" data-ar="موهيتو ريد بول">Red Bull Mojito</h3>
+                            <p class="item-price" data-price="3.0">3.0 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="cocktail" class="menu-category">
+                <h2 class="category-title" data-en="Cocktail" data-ar="كوكتيل">Cocktail</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L16%20%281%29.png" alt="Strawberry & Milk" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Strawberry & Milk" data-ar="فراولة و حليب">Strawberry & Milk</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L17%20%281%29.png" alt="Mango & Milk" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Mango & Milk" data-ar="مانجا و حليب">Mango & Milk</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="coffee" class="menu-category">
+                <h2 class="category-title" data-en="Coffee" data-ar="قهوة">Coffee</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L18%20%281%29.png" alt="Americano" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Americano" data-ar="أمريكانو">Americano</h3>
+                            <p class="item-price" data-price="1">1 JD</p>
+                        </div>
+                    </div>
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L19%20%281%29.png" alt="Espresso Shot" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="Espresso Shot" data-ar="شوت إسبريسو">Espresso Shot</h3>
+                            <p class="item-price" data-price="1">1 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="desserts" class="menu-category">
+                <h2 class="category-title" data-en="Desserts" data-ar="حلويات">Desserts</h2>
+                <div class="menu-items-grid">
+                    <div class="menu-item-card">
+                        <span class="card-border-glow"></span>
+                        <div class="item-image-wrapper">
+                            <img src="https://archive.org/download/l-20-1/L20%20%281%29.png" alt="French Toast" class="item-image">
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name" data-en="French Toast" data-ar="فرينش توست">French Toast</h3>
+                            <p class="item-price" data-price="2">2 JD</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        <footer id="main-footer">
+            <a href="https://www.instagram.com/laithdeveloper" target="_blank" rel="noopener noreferrer" class="social-icon">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <p class="copyright-text" data-en="All rights reserved © 2025 Laith AL - Arabiat" data-ar="جميع الحقوق محفوظة © 2025 ليث العربيات">All rights reserved © 2025 Laith AL - Arabiat</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const langToggleButton = document.getElementById('lang-toggle');
+            const htmlElement = document.documentElement;
+            const loaderWrapper = document.getElementById('loader-wrapper');
+            const mainContent = document.getElementById('main-content');
+            const starsContainer = document.getElementById('stars-container');
+
+            let currentLang = 'en';
+
+            // --- 1. Background Star Particle Animation (Massively Increased) ---
+            function createStars() {
+                // REVISED: Massively increased star count
+                const starCount = 500; 
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    const size = Math.random() * 1.5 + 0.5; // 0.5px to 2px
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    star.style.left = `${Math.random() * 100}vw`;
+                    star.style.top = `${Math.random() * 100}vh`;
+                    const duration = Math.random() * 20 + 10; // 10 to 30 seconds
+                    const delay = Math.random() * 10; 
+                    star.style.animationDuration = `${duration}s`;
+                    star.style.animationDelay = `${delay}s`;
+                    // REVISED: Adjusted opacity for denser look
+                    star.style.opacity = Math.random() * 0.5 + 0.2; // 0.2 to 0.7
+                    starsContainer.appendChild(star);
+                }
+            }
+
+            // --- 2. Intro Animation (v6) ---
+            function startIntroSequence() {
+                setTimeout(() => {
+                    loaderWrapper.classList.add('zoom-out');
+                    setTimeout(() => {
+                        mainContent.style.display = 'block';
+                    }, 500); 
+                    setTimeout(() => {
+                        loaderWrapper.style.display = 'none';
+                    }, 1500); 
+                }, 4000); 
+            }
+
+            // --- 3. Language Toggle Function ---
+            function toggleLanguage() {
+                currentLang = (currentLang === 'en') ? 'ar' : 'en';
+                const isRTL = (currentLang === 'ar');
+
+                htmlElement.setAttribute('lang', currentLang);
+                htmlElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+                langToggleButton.textContent = isRTL ? 'EN' : 'AR';
+
+                document.querySelectorAll('[data-en]').forEach(el => {
+                    el.textContent = el.dataset[currentLang];
+                });
+
+                document.querySelectorAll('.item-price').forEach(el => {
+                    const price = el.dataset.price;
+                    el.textContent = isRTL ? `${price} د.أ` : `${price} JD`;
+                });
+            }
+            
+            // --- 4. Category Nav Active Link on Scroll (v6) ---
+            const sections = document.querySelectorAll('.menu-category');
+            const navLinks = document.querySelectorAll('.category-link');
+            const navWrapper = document.querySelector('.category-nav-wrapper');
+
+            function updateActiveLink() {
+                let currentSectionId = '';
+                const headerHeight = document.getElementById('header-container').offsetHeight + 20; 
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (window.scrollY >= sectionTop - headerHeight) {
+                        currentSectionId = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    const linkHref = link.getAttribute('href').substring(1);
+                    
+                    if (linkHref === currentSectionId) {
+                        link.classList.add('active');
+                        
+                        // Auto-scroll the nav bar on mobile
+                        if (window.innerWidth < 768) {
+                            const linkRect = link.getBoundingClientRect();
+                            const wrapperRect = navWrapper.getBoundingClientRect();
+                            
+                            navWrapper.scrollBy({
+                                left: (linkRect.left - wrapperRect.left) - (wrapperRect.width / 2) + (linkRect.width / 2),
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            }
+
+            // --- 5. Initialize Everything ---
+            createStars();
+            startIntroSequence();
+            langToggleButton.addEventListener('click', toggleLanguage);
+            window.addEventListener('scroll', updateActiveLink);
+            updateActiveLink(); 
+        });
+    </script>
+</body>
+</html>
